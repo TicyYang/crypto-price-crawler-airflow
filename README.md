@@ -6,3 +6,5 @@
 - Airflow: 2.9.1
 - MySQL: 8.2.0
 
+## DAG Graph
+![DAG Graph](DAG_graph.png)
