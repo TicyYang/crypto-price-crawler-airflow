@@ -1,0 +1,17 @@
+{
+    "for_http_sensor":{
+        "http_conn_id":"yahoo_stock",
+        "endpoint":"/cryptocurrencies"
+    },
+    "for_crawler":{
+        "url":"https://tw.stock.yahoo.com/cryptocurrencies",
+        "user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/114.0",
+        "name_html_class":"Fz(14px) C(#979ba7) Ell",
+        "selector_template_price":"li.List\\(n\\):nth-child({i}) > div:nth-child(1) > div:nth-child(2) > span:nth-child(1)",
+        "num_values":12,
+        "columns":["BTC-USD", "BCH-USD", "ETH-USD", "ETC-USD", "XRP-USD", "BNB-USD", "LINK-USD", "LTC-USD", "EOS-USD", "XLM-USD", "ADA-USD", "USDT-USD"]
+    },
+    "mysql_conn_id":"mysql_crypto",
+    "db":"crypto",
+    "table":"price"
+}
