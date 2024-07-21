@@ -17,7 +17,7 @@ from functions.crypto_price_crawler_func import (
 # ----------Parameters for this dag----------
 mail_recipient = ["sirius1993@gmail.com"]
 dag_id = "crypto_price_crawler"
-dag_time = None  # */10 * * * *
+dag_time = "*/10 * * * *"
 local_tz = pendulum.timezone("Asia/Taipei")
 default_args = {
     "owner": "Ticy",
