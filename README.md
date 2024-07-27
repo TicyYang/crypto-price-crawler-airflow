@@ -35,7 +35,7 @@ crypto-price-crawler-airflow
 
 ## Before Schedule or Trigger the DAG
 1. Create database and table: Use SQL command in create_db_table.sql to create the database, user, and table.
-2. Setting on Airflow Web UI
+2. Setting on Airflow Web UI:
    - Connection:
      - Connection Id: `yahoo_stock`
      - Connection Type: `HTTP`
