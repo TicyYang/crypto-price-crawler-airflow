@@ -8,7 +8,6 @@ from functions.crypto_price_crawler_func import (
     check_crypto_names_,
     crypto_price_crawl_,
     insert_into_mysql_,
-    check_failed_,
     task_failed_alarm_,
     cleanup_xcom_
 )
@@ -39,7 +38,8 @@ with DAG(
     dag_id=dag_id,
     default_args=default_args,
     schedule=dag_time,
-    max_active_runs=1
+    max_active_runs=1,
+    catchup=False
 ) as dag:
     
     # key for Variable.get() in functions
@@ -62,14 +62,16 @@ with DAG(
         mode="reschedule",
         poke_interval=10,
         timeout=300,
-        soft_fail=True
+        soft_fail=True,
+        email_on_failure=False
     )
     
 
     check_crypto_names = BranchPythonOperator(
         task_id="check_crypto_names",
         python_callable=check_crypto_names_,
-        op_kwargs={"config_key": config_key}
+        op_kwargs={"config_key": config_key},
+        email_on_failure=False
     )
 
 
@@ -81,20 +83,23 @@ with DAG(
     crypto_price_crawl = PythonOperator(
         task_id="crypto_price_crawl",
         python_callable=crypto_price_crawl_,
-        op_kwargs={"config_key": config_key}
+        op_kwargs={"config_key": config_key},
+        email_on_failure=False
     )
 
 
     insert_into_mysql = PythonOperator(
         task_id="insert_into_mysql",
         python_callable=insert_into_mysql_,
-        op_args=[config_key, sql_cmd_key]
+        op_args=[config_key, sql_cmd_key],
+        email_on_failure=False
     )
 
     
     check_failed = BranchPythonOperator(
         task_id="check_failed",
-        python_callable=check_failed_,
+        python_callable=lambda x: "task_failed_alarm" if "failed" in x else "all_success",
+        op_kwargs={"x": "{{ dag_run.get_task_instances(state='failed') }}"},
         trigger_rule="all_done"
     )
 

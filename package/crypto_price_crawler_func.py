@@ -1,11 +1,11 @@
 import requests
 from bs4 import BeautifulSoup
+import pendulum
 from airflow.models import Variable
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.operators.email import EmailOperator
 from airflow.utils.db import provide_session
 from airflow.models import XCom
-import pendulum
 
 
 def check_crypto_names_(config_key:str) -> str:
@@ -17,6 +17,10 @@ def check_crypto_names_(config_key:str) -> str:
 
     config = Variable.get(key=config_key, deserialize_json=True)
     crawler_config = config["for_crawler"]
+    print("-" * 50)
+    print(f"Config:")
+    [print(f"{k}: {v}") for k, v in crawler_config.items()]
+    print("-" * 50)
 
     url = crawler_config["url"]
     user_agent = crawler_config["user_agent"]
@@ -24,15 +28,6 @@ def check_crypto_names_(config_key:str) -> str:
     name_html_class = crawler_config["name_html_class"]
     num_values = crawler_config["num_values"]
     columns = crawler_config["columns"]
-
-    print("-" * 50)
-    print("Arguments:\n")
-    print(f"url: {url}")
-    print(f"headers: {headers}")
-    print(f"name_html_class: {name_html_class}")
-    print(f"num_values: {num_values}")
-    print(f"columns: {columns}")
-    print("-" * 50)
 
     response = requests.get(url=url, headers=headers)
     response.encoding = "utf-8"
@@ -63,7 +58,6 @@ def check_crypto_names_(config_key:str) -> str:
         return "unexpected_crypto_name"
 
 
-
 def crypto_price_crawl_(config_key:str) -> str:
     """
     For PythonOperator.
@@ -73,19 +67,17 @@ def crypto_price_crawl_(config_key:str) -> str:
 
     config = Variable.get(key=config_key, deserialize_json=True)
     crawler_config = config["for_crawler"]
+    print("-" * 50)
+    print(f"Config:")
+    [print(f"{k}: {v}") for k, v in crawler_config.items()]
+    print("-" * 50)
 
     url = crawler_config["url"]
     user_agent = crawler_config["user_agent"]
     headers = {"User-Agent": user_agent}
     selector_template_price = crawler_config["selector_template_price"]
     num_values = crawler_config["num_values"]
-    
-    print("-" * 50)
-    print("Arguments:\n")
-    print(f"url: {url}")
-    print(f"headers: {headers}")
-    print(f"selector_template_price: {selector_template_price}")
-    print("-" * 50)
+
 
     fetch_dt = pendulum.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -114,7 +106,6 @@ def crypto_price_crawl_(config_key:str) -> str:
     return data_to_insert
 
 
-
 def insert_into_mysql_(config_key:str, sql_cmd_key:str, **context) -> None:
     """
     For PythonOperator.
@@ -124,16 +115,15 @@ def insert_into_mysql_(config_key:str, sql_cmd_key:str, **context) -> None:
     """
     
     config = Variable.get(key=config_key, deserialize_json=True)
+    print("-" * 50)
+    print(f"Config:")
+    [print(f"{k}: {v}") for k, v in config.items()]
+    print("-" * 50)
+
     mysql_conn_id = config["mysql_conn_id"]
     db = config["db"]
     table = config["table"]
 
-    print("-" * 50)
-    print("Arguments:\n")
-    print(f"mysql_conn_id: {mysql_conn_id}")
-    print(f"db: {db}")
-    print(f"table: {table}")
-    print("-" * 50)
     
     ti = context["ti"]
     data_to_insert = ti.xcom_pull(task_ids="crypto_price_crawl")
@@ -148,23 +138,6 @@ def insert_into_mysql_(config_key:str, sql_cmd_key:str, **context) -> None:
         sql=sql_cmd
     )
     insert_into.execute(dict())
-
-
-
-def check_failed_(**context) -> str:
-    """
-    For BranchPythonOperator.
-    Check if there are any tasks whose state is 'failed'.
-    """
-
-    dag_run = context['dag_run']
-    failed_ti = [ti for ti in dag_run.get_task_instances() if ti.state == "failed"]
-    
-    if len(failed_ti) > 0:
-        return "task_failed_alarm"
-    else:
-        return "all_success"
-
 
 
 def task_failed_alarm_(mail_recipient:list, **context) -> None:
@@ -195,7 +168,6 @@ def task_failed_alarm_(mail_recipient:list, **context) -> None:
         html_content=email_content + "<br>" + "<a href='http://192.168.65.134:8080/dags/" + dag_id + "'>Web UI url</a>"
     )
     send_email.execute(dict())
-
 
 
 @provide_session
